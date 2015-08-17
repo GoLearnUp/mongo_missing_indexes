@@ -65,8 +65,8 @@ class Mongo::MissingIndexes
       explain = collection.send("#{explain_method_name}_aliased_from_missing_indexes", *explain_args, &block).explain
       non_index_query = false
 
-      if explain['stats']
-        if explain['stats']['type'] != "FETCH"
+      if explain['cursor']
+        if explain['cursor'] =~ /^BasicCursor/
           non_index_query = true
         end
       elsif explain['executionStats']
