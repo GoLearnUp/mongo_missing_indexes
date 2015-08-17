@@ -8,12 +8,13 @@ Want to know what queries are missing an index in a MongoMapper, Mongoid, or gen
     require 'mongo/missing_indexes'
     Mongo::MissingIndexes.enabled = true
 
-    # outside of Rails
+Outside of Rails, you should assign a logger to log the output:
+
     Mongo::MissingIndexes.logger = Logger.new("test.log")
 
-    # inside of Rails, Rails.logger will be used by default
+Inside of rails, Rails.logger will be used by default (although you can still assign a logger if you want to).
 
-    # output in log:
+Here's what gets dumped in the log if there is an un-indexed mongo query:
 
     MONGODB (15.8ms) learnup-development['interview_thank_you_notes'].find({:application_id=>1})
     b843100f-783e-4d85-b298-0c32b44322b8 - unindexed query: interview_thank_you_notes.find({:application_id=>1}, {:transformer=>#<Proc:0x007fd7673c0118@/Users/smtlaissezfaire/.rvm/gems/ruby-2.2.2@LearnUp/gems/mongo_mapper-0.12.0/lib/mongo_mapper/plugins/querying.rb:76 (lambda)>})
@@ -49,11 +50,15 @@ Want to know what queries are missing an index in a MongoMapper, Mongoid, or gen
 
 ## Install (in Rails):
 
-    # Gemfile:
+In your Gemfile:
 
     gem 'mongo_missing_indexes'
 
+Then run:
+
     $ bundle install
+
+And add an initializer:
 
     # config/initializers/missing_indexes.rb
 
