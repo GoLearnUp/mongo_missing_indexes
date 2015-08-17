@@ -27,15 +27,33 @@ describe Mongo::MissingIndexes do
       Mongo::MissingIndexes.enabled = true
       @logger = @test_logger
       Mongo::MissingIndexes.logger = @logger
+
+      @messages_received = []
+      @logger.stub(:info) do |message|
+        @messages_received << message
+      end
+    end
+
+    def regexp_escape(str)
+      Regexp.new(Regexp.escape(str))
     end
 
     it "should be enabled" do
       Mongo::MissingIndexes.should be_enabled
     end
 
-    it "should log the query" do
-      @logger.should_receive(:info).with("unindexed query: users.find({:first_name=>\"Scott\"})".red)
+    it "should not log the query if there is no data (there is no plan)" do
+      @logger.should_not_receive(:info)
       @mongo_db['users'].find({ :first_name => "Scott" })
+    end
+
+    it "should log the query if there is data" do
+      regex = regexp_escape("unindexed query: users.find({:first_name=>\"Scott\"})")
+
+      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].find({ :first_name => "Scott" })
+
+      @messages_received.should include_matching(regex)
     end
 
     it "should return the correct result" do
@@ -58,13 +76,21 @@ describe Mongo::MissingIndexes do
     end
 
     it "should log a count query" do
-      @logger.should_receive(:info).with("unindexed query: users.find({:first_name=>\"Scott\"})".red)
+      regexp = regexp_escape("unindexed query: users.find({:first_name=>\"Scott\"})")
+
+      @mongo_db['users'].insert({ :first_name => "Scott" })
       @mongo_db['users'].find({ :first_name => "Scott" }).count
+
+      @messages_received.should include_matching(regexp)
     end
 
     it "should log a count query when given directly" do
-      @logger.should_receive(:info).with("unindexed query: users.count({:first_name=>\"Scott\"})".red)
+      regexp = regexp_escape("unindexed query: users.count({:first_name=>\"Scott\"})")
+
+      @mongo_db['users'].insert({ :first_name => "Scott" })
       @mongo_db['users'].count({ :first_name => "Scott" })
+
+      @messages_received.should include_matching(regexp)
     end
 
     it "should log an update query" do
@@ -79,8 +105,17 @@ describe Mongo::MissingIndexes do
         }
       }
 
-      @logger.should_receive(:info).with("unindexed query: users.update({:first_name=>\"Scott\"}, {\"$set\"=>{:last_name=>\"Taylor\"}})".red)
+      regexp = regexp_escape("unindexed query: users.update({:first_name=>\"Scott\"}, {\"$set\"=>{:last_name=>\"Taylor\"}})")
+      @mongo_db['users'].insert({ :first_name => "Scott" })
       @mongo_db['users'].update(find_query, update_query)
+
+      @messages_received.should include_matching(regexp)
+    end
+
+    it "have the backtrace of the query location" do
+      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].count({ :first_name => "Scott" })
+      @messages_received.should include_matching(/#{__FILE__}:#{__LINE__-1}/)
     end
   end
 
@@ -96,6 +131,8 @@ describe Mongo::MissingIndexes do
     end
 
     it "should raise if no logger and a query provided" do
+      @mongo_db['users'].insert({ :first_name => "Scott" })
+
       Mongo::MissingIndexes.logger = nil
       Mongo::MissingIndexes.enabled = true
 

@@ -1,6 +1,7 @@
 require 'mongo'
 require 'logger'
 require 'colored'
+require 'securerandom'
 
 class Mongo::MissingIndexes
   class << self
@@ -53,6 +54,10 @@ class Mongo::MissingIndexes
     attr_writer :logger
 
     def instrument_database(collection, method_name, *args, &block)
+      if !logger
+        raise "Must provide a logger"
+      end
+
       if method_name == :update
         explain_method_name = :find
         explain_args = [args[0]]
@@ -65,18 +70,24 @@ class Mongo::MissingIndexes
       explain = collection.send("#{explain_method_name}_aliased_from_missing_indexes", *explain_args, &block).explain
       non_index_query = false
 
-      if explain['cursor']
-        if explain['cursor'] =~ /^BasicCursor/
+      if explain['stats']
+        if explain['stats']['type'] == "COLLSCAN"
           non_index_query = true
         end
-      elsif explain['executionStats']
-        if explain['executionStats']['executionStages']['stage'] != "FETCH"
+      elsif explain['queryPlanner']
+        if explain['queryPlanner']['winningPlan']['stage'] == "COLLSCAN"
           non_index_query = true
         end
       end
 
       if non_index_query
-        logger.info("unindexed query: #{collection.name}.#{method_name}(#{args.map { |a| a.inspect }.join(", ")})".red)
+        query_id = SecureRandom.uuid
+
+        logger.info("#{query_id} - unindexed query: #{collection.name}.#{method_name}(#{args.map { |a| a.inspect }.join(", ")})".red)
+        logger.info("#{query_id} -  Query backtrace:".yellow)
+        caller.map(&:to_s).each do |line|
+          logger.info("#{query_id} -    #{line}".yellow)
+        end
       end
     end
   end

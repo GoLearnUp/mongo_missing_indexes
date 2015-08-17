@@ -42,3 +42,9 @@ RSpec.configure do |config|
     c.syntax = :should
   end
 end
+
+RSpec::Matchers.define :include_matching do |expected_regex|
+  match do |actual|
+    actual.any? { |element| element =~ expected_regex }
+  end
+end
