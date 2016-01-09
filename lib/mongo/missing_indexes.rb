@@ -67,7 +67,8 @@ class Mongo::MissingIndexes
         explain_args = args
       end
 
-      explain = collection.send("#{explain_method_name}_aliased_from_missing_indexes", *explain_args, &block).explain
+      # ignore the block, since collection.find({}, &block) returns nil
+      explain = collection.send("#{explain_method_name}_aliased_from_missing_indexes", *explain_args).explain
       non_index_query = false
 
       if explain['stats']

@@ -117,6 +117,14 @@ describe Mongo::MissingIndexes do
       @mongo_db['users'].count({ :first_name => "Scott" })
       @messages_received.should include_matching(/#{__FILE__}:#{__LINE__-1}/)
     end
+
+    it "should work with a cursor (a block)" do
+      @mongo_db['users'].insert({ :first_name => "Scott" })
+
+      block = lambda { |obj| }
+
+      @mongo_db['users'].find({ first_name: "Scott" }, &block)
+    end
   end
 
   describe "logger" do
