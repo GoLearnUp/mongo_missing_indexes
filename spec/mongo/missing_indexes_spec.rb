@@ -131,6 +131,32 @@ describe Mongo::MissingIndexes do
       @messages_received.should include_matching(regexp)
     end
 
+    it "should log a delete_one query" do
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
+
+      find_query = {
+        :first_name => "Scott"
+      }
+
+      regexp = regexp_escape("unindexed query: users.delete_one({:first_name=>\"Scott\"})")
+      @mongo_db['users'].delete_one(find_query)
+
+      @messages_received.should include_matching(regexp)
+    end
+
+    it "should log a delete_many query" do
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
+
+      find_query = {
+        :first_name => "Scott"
+      }
+
+      regexp = regexp_escape("unindexed query: users.delete_many({:first_name=>\"Scott\"})")
+      @mongo_db['users'].delete_many(find_query)
+
+      @messages_received.should include_matching(regexp)
+    end
+
     it "have the backtrace of the query location" do
       @mongo_db['users'].insert_one({ :first_name => "Scott" })
       @mongo_db['users'].count({ :first_name => "Scott" })

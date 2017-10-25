@@ -18,6 +18,8 @@ class Mongo::MissingIndexes
         :count,
         :update_one,
         :update_many,
+        :delete_one,
+        :delete_many,
       ].each do |method_name|
         if @enabled
           Mongo::Collection.class_eval <<-HERE, __FILE__, __LINE__
