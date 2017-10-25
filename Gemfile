@@ -7,5 +7,4 @@ group :test do
   gem 'rspec'
   gem 'byebug'
   gem 'bson_ext'
-  gem 'mongoid'
 end
