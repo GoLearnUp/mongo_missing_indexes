@@ -85,10 +85,10 @@ class Mongo::MissingIndexes
       if non_index_query
         query_id = SecureRandom.uuid
 
-        logger.info("#{query_id} - unindexed query: #{collection.name}.#{method_name}(#{args.map { |a| a.inspect }.join(", ")})".red)
-        logger.info("#{query_id} -  Query backtrace:".yellow)
+        logger.info("mongo_missing_indexes - #{query_id} - unindexed query: #{collection.name}.#{method_name}(#{args.map { |a| a.inspect }.join(", ")})".red)
+        logger.info("mongo_missing_indexes - #{query_id} -  Query backtrace:".yellow)
         caller.map(&:to_s).each do |line|
-          logger.info("#{query_id} -    #{line}".yellow)
+          logger.info("mongo_missing_indexes - #{query_id} -    #{line}".yellow)
         end
       end
     end
