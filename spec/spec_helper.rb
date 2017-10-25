@@ -30,8 +30,8 @@ RSpec.configure do |config|
 
   config.before(:all) do
     @test_logger = MongoTestLogger.logger
-    @mongo_client = Mongo::MongoClient.new("localhost", 27017)
-    @mongo_db = @mongo_client.db("mongo_missing_indexes")
+    @mongo_client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mongo_missing_indexes')
+    @mongo_db = @mongo_client.database
   end
 
   config.before(:each) do

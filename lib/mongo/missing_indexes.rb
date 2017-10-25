@@ -16,7 +16,8 @@ class Mongo::MissingIndexes
       [
         :find,
         :count,
-        :update,
+        :update_one,
+        :update_many,
       ].each do |method_name|
         if @enabled
           Mongo::Collection.class_eval <<-HERE, __FILE__, __LINE__
@@ -25,7 +26,7 @@ class Mongo::MissingIndexes
 
               def #{method_name}(*args, &block)
                 #{method_name}_aliased_from_missing_indexes(*args, &block).tap do
-                  Mongo::MissingIndexes.instrument_database(self, :#{method_name}, *args, &block)
+                  ::Mongo::MissingIndexes.instrument_database(self, :#{method_name}, *args, &block)
                 end
               end
             end

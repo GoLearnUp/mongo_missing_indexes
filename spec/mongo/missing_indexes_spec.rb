@@ -50,14 +50,14 @@ describe Mongo::MissingIndexes do
     it "should log the query if there is data" do
       regex = regexp_escape("unindexed query: users.find({:first_name=>\"Scott\"})")
 
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
       @mongo_db['users'].find({ :first_name => "Scott" })
 
       @messages_received.should include_matching(regex)
     end
 
     it "should return the correct result" do
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
 
       res = []
 
@@ -70,7 +70,7 @@ describe Mongo::MissingIndexes do
     end
 
     it "should not log the query if there is an index" do
-      @mongo_db['users'].create_index(:first_name)
+      @mongo_db['users'].indexes.create_one(first_name: 1)
       @logger.should_not_receive(:info)
       @mongo_db['users'].find({ :first_name => "Scott" })
     end
@@ -78,7 +78,7 @@ describe Mongo::MissingIndexes do
     it "should log a count query" do
       regexp = regexp_escape("unindexed query: users.find({:first_name=>\"Scott\"})")
 
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
       @mongo_db['users'].find({ :first_name => "Scott" }).count
 
       @messages_received.should include_matching(regexp)
@@ -87,14 +87,14 @@ describe Mongo::MissingIndexes do
     it "should log a count query when given directly" do
       regexp = regexp_escape("unindexed query: users.count({:first_name=>\"Scott\"})")
 
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
       @mongo_db['users'].count({ :first_name => "Scott" })
 
       @messages_received.should include_matching(regexp)
     end
 
-    it "should log an update query" do
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+    it "should log an update_one query" do
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
 
       find_query = {
         :first_name => "Scott"
@@ -105,21 +105,40 @@ describe Mongo::MissingIndexes do
         }
       }
 
-      regexp = regexp_escape("unindexed query: users.update({:first_name=>\"Scott\"}, {\"$set\"=>{:last_name=>\"Taylor\"}})")
-      @mongo_db['users'].insert({ :first_name => "Scott" })
-      @mongo_db['users'].update(find_query, update_query)
+      regexp = regexp_escape("unindexed query: users.update_one({:first_name=>\"Scott\"}, {\"$set\"=>{:last_name=>\"Taylor\"}})")
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
+      @mongo_db['users'].update_one(find_query, update_query)
+
+      @messages_received.should include_matching(regexp)
+    end
+
+    it "should log an update_many query" do
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
+
+      find_query = {
+        :first_name => "Scott"
+      }
+      update_query = {
+        '$set' => {
+          :last_name => "Taylor"
+        }
+      }
+
+      regexp = regexp_escape("unindexed query: users.update_many({:first_name=>\"Scott\"}, {\"$set\"=>{:last_name=>\"Taylor\"}})")
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
+      @mongo_db['users'].update_many(find_query, update_query)
 
       @messages_received.should include_matching(regexp)
     end
 
     it "have the backtrace of the query location" do
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
       @mongo_db['users'].count({ :first_name => "Scott" })
       @messages_received.should include_matching(/#{__FILE__}:#{__LINE__-1}/)
     end
 
     it "should work with a cursor (a block)" do
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
 
       block = lambda { |obj| }
 
@@ -139,7 +158,7 @@ describe Mongo::MissingIndexes do
     end
 
     it "should raise if no logger and a query provided" do
-      @mongo_db['users'].insert({ :first_name => "Scott" })
+      @mongo_db['users'].insert_one({ :first_name => "Scott" })
 
       Mongo::MissingIndexes.logger = nil
       Mongo::MissingIndexes.enabled = true
