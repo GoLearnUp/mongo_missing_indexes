@@ -2,7 +2,7 @@ require 'date'
 
 Gem::Specification.new do |s|
   s.name        = 'mongo_missing_indexes'
-  s.version     = '0.0.1'
+  s.version     = '0.1.0'
   s.date        = Date.today.to_s
   s.summary     = "Detect missing indexes in mongo queries"
   s.description = "Detect missing indexes in mongo queries"
